@@ -31,7 +31,7 @@ if #[cfg(feature = "ssr")] {
 
         let conf = get_configuration(Some("Cargo.toml")).await.unwrap();
         let leptos_options = conf.leptos_options;
-        let addr = leptos_options.site_address.clone();
+        let addr = leptos_options.site_addr.clone();
         let routes = generate_route_list(|cx| view! { cx, <App/> }).await;
         log::debug!("serving at {addr}");
 
@@ -39,9 +39,11 @@ if #[cfg(feature = "ssr")] {
         let app = Router::new()
         .route("/api/*fn_name", post(leptos_axum::handle_server_fns))
         .route("/favicon.ico", get(file_handler))
-        .leptos_routes(leptos_options.clone(), routes, |cx| view! { cx, <App/> } )
+        .leptos_routes(&leptos_options, routes, |cx| view! { cx, <App/> })
         .fallback(file_handler)
-        .layer(Extension(Arc::new(leptos_options)));
+        .with_state(leptos_options);
+
+
         // run our app with hyper
         // `axum::Server` is a re-export of `hyper::Server`
         axum::Server::bind(&addr)
